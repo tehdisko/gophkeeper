@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,57 +11,65 @@ func PasswordsEditUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "esc":
-			return m, tea.Quit
-
-		// Change cursor mode
-		// Set focus to next input
+		case "esc":
+			m.state = passwordListState
+			return m, nil
 		case "tab", "shift+tab", "enter", "up", "down", "j", "k":
 			s := msg.String()
 
-			// Cycle indexes
 			if s == "up" || s == "shift+tab" {
-				m.passwordFocusIndex--
+				m.passwordUpdateInputsFocusIndex--
 			} else {
-				m.passwordFocusIndex++
+				m.passwordUpdateInputsFocusIndex++
 			}
 
-			if m.passwordFocusIndex > len(m.passwordInputs) {
-				m.passwordFocusIndex = 0
-			} else if m.passwordFocusIndex < 0 {
-				m.passwordFocusIndex = len(m.passwordInputs)
+			if m.passwordUpdateInputsFocusIndex > len(m.passwordUpdateInputs) {
+				m.passwordUpdateInputsFocusIndex = 0
+			} else if m.passwordUpdateInputsFocusIndex < 0 {
+				m.passwordUpdateInputsFocusIndex = len(m.passwordUpdateInputs)
 			}
 
-			cmds := make([]tea.Cmd, len(m.passwordInputs))
-			for i := 0; i <= len(m.passwordInputs)-1; i++ {
-				if i == m.passwordFocusIndex {
-					// Set focused state
-					cmds[i] = m.passwordInputs[i].Focus()
-					m.passwordInputs[i].PromptStyle = focusedStyle
-					m.passwordInputs[i].TextStyle = focusedStyle
+			cmds := make([]tea.Cmd, len(m.passwordUpdateInputs))
+			for i := 0; i <= len(m.passwordUpdateInputs)-1; i++ {
+				if i == m.passwordUpdateInputsFocusIndex {
+					cmds[i] = m.passwordUpdateInputs[i].Focus()
+					m.passwordUpdateInputs[i].PromptStyle = focusedStyle
+					m.passwordUpdateInputs[i].TextStyle = focusedStyle
 					continue
 				}
-				// Remove focused state
-				m.passwordInputs[i].Blur()
-				m.passwordInputs[i].PromptStyle = noStyle
-				m.passwordInputs[i].TextStyle = noStyle
+				m.passwordUpdateInputs[i].Blur()
+				m.passwordUpdateInputs[i].PromptStyle = noStyle
+				m.passwordUpdateInputs[i].TextStyle = noStyle
 			}
 
-			if s == "enter" && m.passwordFocusIndex == len(m.passwordInputs) {
+			if s == "enter" && m.passwordUpdateInputsFocusIndex == len(m.passwordUpdateInputs) {
+				err := updatePassword(
+					m.db, m.currentPasswordID,
+					m.passwordUpdateInputs[0].Value(),
+					m.passwordUpdateInputs[1].Value(),
+					m.passwordUpdateInputs[2].Value(),
+				)
+				if err != nil {
+					log.Fatalf("Error: %v", err)
+				}
+
+				updatedItem := item{
+					id:       m.currentPasswordID,
+					site:     m.passwordUpdateInputs[0].Value(),
+					userName: m.passwordUpdateInputs[1].Value(),
+					password: m.passwordUpdateInputs[2].Value(),
+				}
+				m.passwordsList.SetItem(m.passwordsList.Index(), updatedItem)
 				m.state = passwordListState
 			}
 			return m, tea.Batch(cmds...)
 		}
 	}
 
-	// Handle character input and blinking
+	cmds := make([]tea.Cmd, len(m.passwordUpdateInputs))
 
-	cmds := make([]tea.Cmd, len(m.passwordInputs))
-
-	// Only text inputs with Focus() set will respond, so it's safe to simply
-	// update all of them here without any further logic.
-	for i := range m.passwordInputs {
-		m.passwordInputs[i], cmds[i] = m.passwordInputs[i].Update(msg)
+	for i := range m.passwordUpdateInputs {
+		m.passwordUpdateInputs[i], cmds[i] = m.passwordUpdateInputs[i].Update(msg)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -71,18 +79,12 @@ func PasswordsEditView(m model) string {
 	b.WriteString("  ")
 	b.WriteString(titleStyle.Render("Password Edit View"))
 	b.WriteString("\n\n")
-	for i := range m.passwordInputs {
-		b.WriteString(m.passwordInputs[i].View())
-		if i < len(m.passwordInputs)-1 {
+	for i := range m.passwordUpdateInputs {
+		b.WriteString(m.passwordUpdateInputs[i].View())
+		if i < len(m.passwordUpdateInputs)-1 {
 			b.WriteRune('\n')
 		}
 	}
-
-	button := &blurredLoginButton
-	if m.passwordFocusIndex == len(m.passwordInputs) {
-		button = &focusedLoginButton
-	}
-	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
 
 	return b.String()
 }
