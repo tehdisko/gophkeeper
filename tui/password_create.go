@@ -1,4 +1,4 @@
-package main
+package tui
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func PasswordsCreateUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func PasswordsCreateUpdate(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -16,7 +16,6 @@ func PasswordsCreateUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "tab", "shift+tab", "enter", "up", "down", "j", "k":
 			s := msg.String()
-			var insertCmd tea.Cmd
 			if s == "up" || s == "shift+tab" {
 				m.passwordCreateInputsFocusIndex--
 			} else {
@@ -30,22 +29,8 @@ func PasswordsCreateUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			}
 
 			if s == "enter" && m.passwordCreateInputsFocusIndex == len(m.passwordCreateInputs) {
-				id, err := addPassword(
-					m.db, m.passwordCreateInputs[0].Value(),
-					m.passwordCreateInputs[1].Value(),
-					m.passwordCreateInputs[2].Value())
-				if err != nil {
-					log.Fatalf("Error: %v", err)
-				}
-
-				newItem := item{
-					id:       int(id),
-					site:     m.passwordCreateInputs[0].Value(),
-					userName: m.passwordCreateInputs[1].Value(),
-					password: m.passwordCreateInputs[1].Value(),
-				}
-				insertCmd = m.passwordsList.InsertItem(len(m.passwordsList.Items()), newItem)
 				m.state = passwordListState
+				return m, handlePasswordCreate(&m)
 			}
 
 			cmds := make([]tea.Cmd, len(m.passwordCreateInputs))
@@ -62,20 +47,51 @@ func PasswordsCreateUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.passwordCreateInputs[i].PromptStyle = noStyle
 				m.passwordCreateInputs[i].TextStyle = noStyle
 			}
-			cmds = append(cmds, insertCmd)
+			cmds = append(cmds)
 			return m, tea.Batch(cmds...)
 		}
 	}
 
+	// Handle character input and blinking
+	cmd := updateCreateInputs(m, msg)
+
+	return m, cmd
+}
+
+func updateCreateInputs(m Model, msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(m.passwordCreateInputs))
 
 	for i := range m.passwordCreateInputs {
 		m.passwordCreateInputs[i], cmds[i] = m.passwordCreateInputs[i].Update(msg)
 	}
 
-	return m, tea.Batch(cmds...)
+	return tea.Batch(cmds...)
 }
-func PasswordsCreateView(m model) string {
+
+func handlePasswordCreate(m *Model) tea.Cmd {
+	encryptedPassword, err := m.crypto.Encrypt(m.passwordCreateInputs[2].Value())
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	id, err := m.passwordRepo.AddPassword(
+		m.passwordCreateInputs[0].Value(),
+		m.passwordCreateInputs[1].Value(),
+		encryptedPassword)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	newItem := item{
+		id:       int(id),
+		site:     m.passwordCreateInputs[0].Value(),
+		userName: m.passwordCreateInputs[1].Value(),
+		password: encryptedPassword,
+	}
+	cmd := m.passwordsList.InsertItem(len(m.passwordsList.Items()), newItem)
+	return cmd
+}
+
+func PasswordsCreateView(m Model) string {
 	var b strings.Builder
 	b.WriteString("  ")
 	b.WriteString(titleStyle.Render("Password Create View"))

@@ -1,4 +1,4 @@
-package main
+package tui
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func PasswordsEditUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func PasswordsEditUpdate(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -29,6 +29,11 @@ func PasswordsEditUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.passwordUpdateInputsFocusIndex = len(m.passwordUpdateInputs)
 			}
 
+			if s == "enter" && m.passwordUpdateInputsFocusIndex == len(m.passwordUpdateInputs) {
+				m.state = passwordListState
+				return m, handlePasswordUpdate(&m)
+			}
+
 			cmds := make([]tea.Cmd, len(m.passwordUpdateInputs))
 			for i := 0; i <= len(m.passwordUpdateInputs)-1; i++ {
 				if i == m.passwordUpdateInputsFocusIndex {
@@ -42,39 +47,52 @@ func PasswordsEditUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.passwordUpdateInputs[i].TextStyle = noStyle
 			}
 
-			if s == "enter" && m.passwordUpdateInputsFocusIndex == len(m.passwordUpdateInputs) {
-				err := updatePassword(
-					m.db, m.currentPasswordID,
-					m.passwordUpdateInputs[0].Value(),
-					m.passwordUpdateInputs[1].Value(),
-					m.passwordUpdateInputs[2].Value(),
-				)
-				if err != nil {
-					log.Fatalf("Error: %v", err)
-				}
-
-				updatedItem := item{
-					id:       m.currentPasswordID,
-					site:     m.passwordUpdateInputs[0].Value(),
-					userName: m.passwordUpdateInputs[1].Value(),
-					password: m.passwordUpdateInputs[2].Value(),
-				}
-				m.passwordsList.SetItem(m.passwordsList.Index(), updatedItem)
-				m.state = passwordListState
-			}
 			return m, tea.Batch(cmds...)
 		}
 	}
 
+	// Handle character input and blinking
+	cmd := updateUpdateInputs(m, msg)
+
+	return m, cmd
+}
+
+func updateUpdateInputs(m Model, msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(m.passwordUpdateInputs))
 
 	for i := range m.passwordUpdateInputs {
 		m.passwordUpdateInputs[i], cmds[i] = m.passwordUpdateInputs[i].Update(msg)
 	}
 
-	return m, tea.Batch(cmds...)
+	return tea.Batch(cmds...)
 }
-func PasswordsEditView(m model) string {
+
+func handlePasswordUpdate(m *Model) tea.Cmd {
+	encryptedPassword, err := m.crypto.Encrypt(m.passwordUpdateInputs[2].Value())
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	err = m.passwordRepo.UpdatePassword(
+		m.currentPasswordID,
+		m.passwordUpdateInputs[0].Value(),
+		m.passwordUpdateInputs[1].Value(),
+		encryptedPassword,
+	)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	updatedItem := item{
+		id:       m.currentPasswordID,
+		site:     m.passwordUpdateInputs[0].Value(),
+		userName: m.passwordUpdateInputs[1].Value(),
+		password: encryptedPassword,
+	}
+	m.passwordsList.SetItem(m.passwordsList.Index(), updatedItem)
+	return nil
+}
+
+func PasswordsEditView(m Model) string {
 	var b strings.Builder
 	b.WriteString("  ")
 	b.WriteString(titleStyle.Render("Password Edit View"))

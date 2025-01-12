@@ -1,12 +1,16 @@
-package main
+package tui
 
 import (
+	"log"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tehdisko/gophkeeper/crypto"
+	"github.com/tehdisko/gophkeeper/repository/password"
 )
 
-func LoginUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func LoginUpdate(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -43,6 +47,11 @@ func LoginUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			}
 
 			if s == "enter" && m.loginInputsIndex == len(m.loginInputs) {
+				login := m.loginInputs[0].Value()
+				password := m.loginInputs[1].Value()
+				initPasswordRepo(login, &m)
+				updatePasswordList(&m)
+				initCryptoManager(password, &m)
 				m.state = passwordListState
 			}
 			return m, tea.Batch(cmds...)
@@ -58,7 +67,30 @@ func LoginUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func LoginView(m model) string {
+func initPasswordRepo(login string, m *Model) {
+	passwordRepo := password.New(login)
+	m.passwordRepo = passwordRepo
+}
+
+func updatePasswordList(m *Model) {
+	allPasswords, err := m.passwordRepo.GetAllPasswords()
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	items := make([]list.Item, len(allPasswords))
+	for i := range allPasswords {
+		items[i] = item{id: allPasswords[i].ID, site: allPasswords[i].Site, userName: allPasswords[i].UserName, password: allPasswords[i].Password}
+	}
+	m.passwordsList.SetItems(items)
+}
+
+func initCryptoManager(password string, m *Model) {
+	cryptoManager := crypto.NewCryptoManager(password)
+	m.crypto = cryptoManager
+}
+
+func LoginView(m Model) string {
 	var b strings.Builder
 	b.WriteString("  ")
 	b.WriteString(titleStyle.Render("Login View"))

@@ -1,4 +1,4 @@
-package main
+package tui
 
 import "github.com/charmbracelet/bubbles/key"
 
@@ -11,7 +11,7 @@ type keymap struct {
 	Quit   key.Binding
 }
 
-var Keymap = keymap{
+var DefaultKeymap = keymap{
 	Create: key.NewBinding(
 		key.WithKeys("c"),
 		key.WithHelp("c", "create"),

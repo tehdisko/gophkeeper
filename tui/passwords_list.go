@@ -1,4 +1,4 @@
-package main
+package tui
 
 import (
 	"log"
@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func PasswordsListUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func PasswordsListUpdate(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "esc" {
@@ -20,13 +20,17 @@ func PasswordsListUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			selectedItem, ok := m.passwordsList.SelectedItem().(item)
 			if ok {
 				m.currentPasswordID = selectedItem.id
-				password, err := getPassword(m.db, m.currentPasswordID)
+				password, err := m.passwordRepo.GetPassword(m.currentPasswordID)
+				if err != nil {
+					log.Fatalf("Error: %v", err)
+				}
+				decryptedPassword, err := m.crypto.Decrypt(password.Password)
 				if err != nil {
 					log.Fatalf("Error: %v", err)
 				}
 				m.passwordUpdateInputs[0].SetValue(password.Site)
 				m.passwordUpdateInputs[1].SetValue(password.UserName)
-				m.passwordUpdateInputs[2].SetValue(password.Password)
+				m.passwordUpdateInputs[2].SetValue(decryptedPassword)
 				m.state = passwordEditState
 			}
 			return m, nil
@@ -39,7 +43,7 @@ func PasswordsListUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			selectedItem, ok := m.passwordsList.SelectedItem().(item)
 			if ok {
 				m.currentPasswordID = selectedItem.id
-				err := deletePassword(m.db, m.currentPasswordID)
+				err := m.passwordRepo.DeletePassword(m.currentPasswordID)
 				if err != nil {
 					log.Fatalf("Error: %v", err)
 				}
@@ -60,7 +64,6 @@ func PasswordsListUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func PasswordsListView(m model) string {
-	//return docStyle.Render(m.passwordsList.View())
+func PasswordsListView(m Model) string {
 	return m.passwordsList.View()
 }
