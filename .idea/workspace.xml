@@ -4,21 +4,14 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="97775f06-2aeb-4d60-9a1e-aceaea6d0a21" name="Changes" comment="iter1: add login, list, edit page. use local sqllite. add create, edit, delete password">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crypto/crypto.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crypto/crypto_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/domain/password.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/repository/password/sqlite.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tui/ui.go" afterDir="false" />
+    <list default="true" id="97775f06-2aeb-4d60-9a1e-aceaea6d0a21" name="Changes" comment="iter2: refactor structure, add crypto using user password">
+      <change afterPath="$PROJECT_DIR$/cmd/client2/main.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cmd/server/main.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tui2/keymap.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tui2/login.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tui2/passwordlist.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tui2/tui.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/client/database.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/client/keymap.go" beforeDir="false" afterPath="$PROJECT_DIR$/tui/keymap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/client/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/tui/login.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/client/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/client/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/client/password_create.go" beforeDir="false" afterPath="$PROJECT_DIR$/tui/password_create.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/client/password_edit.go" beforeDir="false" afterPath="$PROJECT_DIR$/tui/password_edit.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/client/passwords_list.go" beforeDir="false" afterPath="$PROJECT_DIR$/tui/passwords_list.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
     </list>
@@ -38,7 +31,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="iter1" />
+        <entry key="$PROJECT_DIR$" value="iter2" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -62,10 +55,10 @@
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.automatic.dependencies.download": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "iter2",
+    "git-widget-placeholder": "iter3",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "/home/user/yandex/gophkeeper/repository/user",
+    "last_opened_file_path": "/home/user/yandex/gophkeeper",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm"
@@ -73,16 +66,18 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/cmd" />
       <recent name="$PROJECT_DIR$/repository/user" />
       <recent name="$PROJECT_DIR$/tui2" />
       <recent name="$PROJECT_DIR$/cmd/client" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/cmd" />
       <recent name="$PROJECT_DIR$/repository/password" />
       <recent name="$PROJECT_DIR$/tui2" />
       <recent name="$PROJECT_DIR$/tui2/login" />
       <recent name="$PROJECT_DIR$/ui" />
-      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunManager" selected="Go Build.go build github.com/tehdisko/gophkeeper/cmd/client">
@@ -150,7 +145,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="iter1" />
     <MESSAGE value="iter1: add login, list, edit page. use local sqllite. add create, edit, delete password" />
-    <option name="LAST_COMMIT_MESSAGE" value="iter1: add login, list, edit page. use local sqllite. add create, edit, delete password" />
+    <MESSAGE value="iter2: refactor structure, add crypto using user password" />
+    <option name="LAST_COMMIT_MESSAGE" value="iter2: refactor structure, add crypto using user password" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
